@@ -79,6 +79,11 @@ class LatexTools {
     $result['fallbackToImage']       = array_key_exists('fallbackToImage', $result) ? $result['fallbackToImage'] : $this->fallbackToImage;
     $result['fallbackImageFontName'] = array_key_exists('fallbackImageFontName', $result) ? $result['fallbackImageFontName'] : $this->fallbackImageFontName;
     $result['fallbackImageFontSize'] = array_key_exists('fallbackImageFontSize', $result) ? $result['fallbackImageFontSize'] : $this->fallbackImageFontSize;
+    $result['checkOnly']             = array_key_exists('checkOnly', $result) ? $result['checkOnly'] : false;
+
+    if ($result['checkOnly']) {
+      $result['fallbackToImage'] = false;
+    }
 
     return $result;
 
@@ -120,23 +125,37 @@ class LatexTools {
       $formula = wordwrap($formula, 60);
 
       if ($box = @imagettfbbox($fontSize, 0, $fontName, $formula)) {
-        // debug($box);exit();
         $deltaY = abs($box[5]);
-        $width = $box[2];
+        $width  = $box[2];
         $height = $box[1] + $deltaY;
+
         $image = imagecreatetruecolor($width, $height);
-        imagesavealpha($image, true);
 
-        $transparentColor = imagecolorallocatealpha($image, 0, 0, 0, 127);
-        imagefill($image, 0, 0, $transparentColor);
+        try {
+          if (!@imagesavealpha($image, true)) {
+            throw new Exception('Alpha channel not supported');
+          }
 
-        $black = imagecolorallocate($image, 0, 0, 0);
+          $transparentColor = imagecolorallocatealpha($image, 0, 0, 0, 127);
 
-        imagettftext($image, $fontSize, 0, 0, $deltaY, $black, $fontName, $formula);
+          imagefill($image, 0, 0, $transparentColor);
 
-        imagepng($image, $outputFile);
+          $black = imagecolorallocate($image, 0, 0, 0);
 
-        imagedestroy($image);
+          $retval = @imagettftext($image, $fontSize, 0, 0, $deltaY, $black, $fontName, $formula);
+
+          if (!$retval) {
+            throw new Exception('Can not render formula using provided font');
+          }
+
+          $retval = @imagepng($image, $outputFile);
+
+          if (!$retval || !file_exists($outputFile) || (0 === filesize($outputFile))) {
+            throw new Exception('Can not save output image');
+          }
+        } finally {
+          imagedestroy($image);
+        }
       } else {
         throw new Exception('Font ' . $fontName . ' not found');
       }
@@ -160,7 +179,7 @@ class LatexTools {
       $outputFile = rtrim($this->cacheDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $outputFileName;
     }
 
-    if (file_exists($outputFile)) {
+    if (!$params['checkOnly'] && file_exists($outputFile) && (filesize($outputFile) > 0)) {
       return $outputFile;
     } else {
       $tempFileName = 'latex-' . $formulaHash . '.tex';
@@ -204,8 +223,8 @@ class LatexTools {
 
           $output = join('\n', $output);
 
-          if (($retval > 0) || preg_match('/Emergency stop/i', $output) || !file_exists($dviFile)) {
-            throw new \Exception('Unable to compile LaTeX formula' );
+          if (($retval > 0) || preg_match('/Emergency stop/i', $output) || !file_exists($dviFile) || (0 === filesize($dviFile))) {
+            throw new Exception('Can not compile LaTeX formula' );
           }
 
           $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
@@ -214,8 +233,8 @@ class LatexTools {
 
           exec($command, $output, $retval);
 
-          if (($retval > 0) || !file_exists($outputFile)) {
-            throw new \Exception('Unable to convert DVI file to PNG');
+          if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
+            throw new Exception('San not convert DVI file to PNG');
           }
 
         } catch (Exception $e) {
@@ -246,6 +265,23 @@ class LatexTools {
       return $outputFile;
 
     }
+
+  }
+
+  public function isValidLatex($formula) {
+
+    try {
+      $this->check($formula);
+      return true;
+    } catch (Exception $e) {
+      return false;
+    }
+
+  }
+
+  public function check($formula) {
+
+    return $this->render($formula, ['checkOnly' => true]);
 
   }
 
