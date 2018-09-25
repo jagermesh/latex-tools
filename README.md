@@ -2,7 +2,7 @@
 
 Wrapper around TexLive to render LaTeX formula into images
 
-## Requirement
+## Requirements
 
 ### Linux
 
@@ -21,7 +21,21 @@ Wrapper around TexLive to render LaTeX formula into images
 <?php
       require_once(dirname(__DIR__) . '/3rdparty/LatexTools/LatexTools.php');
       $latexTools = new LatexTools();
-      $latexTools->setCacheDir(dirname(__DIR__) . '/_tmp');
-      $latexTools->setTempDir(dirname(__DIR__) . '/_tmp');
       $latexTools->renderIntoResponse('\sum_{i = 0}^{i = n} \frac{i}{2}');
 ```
+
+## Additional functions
+
+Set cache directory
+
+```php
+$latexTools->setCacheDir(dirname(__DIR__) . '/_tmp');
+```
+
+Set cache directory
+
+```php
+$latexTools->setTempDir(dirname(__DIR__) . '/_tmp');
+```
+
+
