@@ -1,0 +1,16 @@
+{
+  "name": "jagermesh/LatexTools",
+  "description": "Library to render LaTeX formula into image",
+  "version": "1.0.0",
+  "keywords": [ "LaTeX", "TexLive", "MacTex" ],
+  "license": "MIT",
+  "authors": [
+      {
+          "name": "Sergiy Lavryk",
+          "email": "jagermesh@gmail.com"
+      }
+  ],
+  "require": {
+    "php": ">=5.3.0"
+  }
+}

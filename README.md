@@ -6,11 +6,11 @@ Wrapper around TexLive to render LaTeX formula into images
 
 ### Linux
 
-- Install TexLive from [https://www.tug.org/texlive/](https://www.tug.org/texlive/)
+- Install TexLive from [https://tug.org/texlive/](https://tug.org/texlive/)
 
 ### Mac OS
 
-- Install MacTex from [http://tug.org/mactex/](http://tug.org/mactex/)
+- Install MacTex from [https://tug.org/mactex/](https://tug.org/mactex/)
 - Install dvipng
 ```$ sudo tlmgr update --self```
 ```$ sudo tlmgr install dvipng```
