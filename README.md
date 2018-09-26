@@ -10,7 +10,7 @@ Wrapper around TexLive to render LaTeX formula into images
 
 ### Mac OS
 
-- MacTex from [http://tug.org/mactex/](http://tug.org/mactex/)
+- Install MacTex from [http://tug.org/mactex/](http://tug.org/mactex/)
 - Install dvipng
 ```$ sudo tlmgr update --self```
 ```$ sudo tlmgr install dvipng```
@@ -19,23 +19,87 @@ Wrapper around TexLive to render LaTeX formula into images
 
 ```php
 <?php
-      require_once(dirname(__DIR__) . '/3rdparty/LatexTools/LatexTools.php');
-      $latexTools = new LatexTools();
-      $latexTools->renderIntoResponse('\sum_{i = 0}^{i = n} \frac{i}{2}');
+  require_once(__DIR__ . 'LatexTools.php');
+  $latexTools = new LatexTools();
+  $latexTools->renderIntoResponse('(\frac{\beta }{\mu})^\beta {\Gamma(\beta )} \,  e^{-\frac{V\,\beta }{\mu }} \label{gamma}');
 ```
 
-## Additional functions
+Will render this nice formula :)
 
-Set cache directory
+![](demo/demo.png)
+
+## Functions reference
+
+Render formula and return image in response
 
 ```php
-$latexTools->setCacheDir(dirname(__DIR__) . '/_tmp');
+$latexTools->renderIntoResponse($formula, $params = []);
 ```
 
-Set cache directory
+Render image into file
 
 ```php
-$latexTools->setTempDir(dirname(__DIR__) . '/_tmp');
+$fileName = $latexTools->renderIntoFile($formula, $params = []);
 ```
 
+In above calls `$params` could be any of these values:
 
+- `density` - formula density
+- `fallbackToImage` - if need to render regular image for incorrect formula (`true` by default)
+- `fallbackImageFontName` - font name for regular image (`fonts/PlayfairDisplay-Regular.ttf` by default)
+- `fallbackImageFontSize` - font size for regular image (`16` by default)
+
+Also these paramatares could be set globally. Please see below.
+
+Set formula density (`160` by default)
+
+```php
+$latexTools->setDensity($value);
+```
+
+By default regular image will be rendered if formula incorrect (`true` by default)
+
+```php
+$latexTools->setFallbackToImage(true|false);
+```
+
+Example
+
+```php
+<?php
+  require_once(__DIR__ . 'LatexTools.php');
+  $latexTools = new LatexTools();
+  $latexTools->renderIntoResponse('not a fromula or broken one x^');
+```
+
+![](demo/broken.png)
+
+Font name for regular image (`fonts/PlayfairDisplay-Regular.ttf` by default)
+
+```php
+$latexTools->setFallbackImageFontName($value);
+```
+
+Font size for regular image (`16` by default)
+
+```php
+$latexTools->setFallbackImageFontName($value);
+```
+
+Check if formula correct
+
+```php
+$result = $latexTools->isValidLaTeX($formula);
+```
+
+Set directory for cache files (`/tmp` by default)
+
+```php
+$latexTools->setCacheDir($value);
+```
+
+Set directory for temp files (`/tmp` by default)
+
+```php
+$latexTools->setTempDir($value);
+```

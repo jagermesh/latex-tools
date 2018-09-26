@@ -234,7 +234,7 @@ class LatexTools {
           exec($command, $output, $retval);
 
           if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
-            throw new Exception('San not convert DVI file to PNG');
+            throw new Exception('Can not convert DVI file to PNG');
           }
 
         } catch (Exception $e) {
@@ -268,7 +268,7 @@ class LatexTools {
 
   }
 
-  public function isValidLatex($formula) {
+  public function isValidLaTeX($formula) {
 
     try {
       $this->check($formula);
@@ -285,7 +285,7 @@ class LatexTools {
 
   }
 
-  public function renderIntoImage($formula, $params = array()) {
+  public function renderIntoFile($formula, $params = array()) {
 
     $imageFile = $this->render($formula, $params);
 
@@ -337,6 +337,30 @@ class LatexTools {
   public function getFallbackToImage() {
 
     return $this->fallbackToImage;
+
+  }
+
+  public function setFallbackImageFontName($value) {
+
+    $this->fallbackImageFontName = $value;
+
+  }
+
+  public function getFallbackImageFontName() {
+
+    return $this->fallbackImageFontName;
+
+  }
+
+  public function setFallbackImageFontSize($value) {
+
+    $this->fallbackImageFontSize = $value;
+
+  }
+
+  public function getFallbackImageFontSize() {
+
+    return $this->fallbackImageFontSize;
 
   }
 
