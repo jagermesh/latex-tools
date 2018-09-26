@@ -196,25 +196,25 @@ class LatexTools {
 
       try {
 
+        $latexDocument  = '\documentclass[12pt]{article}' . "\n";
+        $latexDocument .= '\usepackage[utf8]{inputenc}' . "\n";
+        $latexDocument .= '\usepackage{amssymb,amsmath}' . "\n";
+        $latexDocument .= '\usepackage{color}' . "\n";
+        $latexDocument .= '\usepackage{amsfonts}' . "\n";
+        $latexDocument .= '\usepackage{amssymb}' . "\n";
+        $latexDocument .= '\usepackage{pst-plot}' . "\n";
+        $latexDocument .= '\begin{document}' . "\n";
+        $latexDocument .= '\pagestyle{empty}' . "\n";
+        $latexDocument .= '\begin{displaymath}' . "\n";
+        $latexDocument .= $formula . "\n";
+        $latexDocument .= '\end{displaymath}'."\n";
+        $latexDocument .= '\end{document}'."\n";
+
+        if (@file_put_contents($tempFile, $latexDocument) === false) {
+          throw new Exception('Can not create temporary formula file at ' . $tempFile);
+        }
+
         try {
-          $latexDocument  = '\documentclass[12pt]{article}' . "\n";
-          $latexDocument .= '\usepackage[utf8]{inputenc}' . "\n";
-          $latexDocument .= '\usepackage{amssymb,amsmath}' . "\n";
-          $latexDocument .= '\usepackage{color}' . "\n";
-          $latexDocument .= '\usepackage{amsfonts}' . "\n";
-          $latexDocument .= '\usepackage{amssymb}' . "\n";
-          $latexDocument .= '\usepackage{pst-plot}' . "\n";
-          $latexDocument .= '\begin{document}' . "\n";
-          $latexDocument .= '\pagestyle{empty}' . "\n";
-          $latexDocument .= '\begin{displaymath}' . "\n";
-          $latexDocument .= $formula . "\n";
-          $latexDocument .= '\end{displaymath}'."\n";
-          $latexDocument .= '\end{document}'."\n";
-
-          if (file_put_contents($tempFile, $latexDocument) === false) {
-            throw new Exception('Can not create temporary formula file at ' . $tempFile);
-          }
-
           $command = 'cd ' . $this->tempDir . '; ' . $this->pathToLatexTool . ' ' . $tempFileName . ' < /dev/null';
           $output = '';
           $retval = '';
@@ -227,22 +227,22 @@ class LatexTools {
             throw new Exception('Can not compile LaTeX formula' );
           }
 
-          $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
-          $output = '';
-          $retval = '';
-
-          exec($command, $output, $retval);
-
-          if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
-            throw new Exception('Can not convert DVI file to PNG');
-          }
-
         } catch (Exception $e) {
           if ($params['fallbackToImage']) {
             return $this->renderSimpleImage($formula, $params);
           } else {
             throw $e;
           }
+        }
+
+        $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
+        $output = '';
+        $retval = '';
+
+        exec($command, $output, $retval);
+
+        if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
+          throw new Exception('Can not convert DVI file to PNG');
         }
 
       } finally {
