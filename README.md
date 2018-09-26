@@ -1,6 +1,6 @@
 # LatexTools
 
-Wrapper around TexLive to render LaTeX formula into images
+Library to render LaTeX formula into image
 
 ## Requirements
 
