@@ -15,11 +15,23 @@ Library to render LaTeX formula into image
 ```$ sudo tlmgr update --self```
 ```$ sudo tlmgr install dvipng```
 
+## Installation
+
+Easiest way is to use composer
+
+```
+composer require jagermesh/latex-tools
+```
+
 ## Usage
 
 ```php
 <?php
-  require_once(__DIR__ . 'LatexTools.php');
+  require_once(__DIR__ . '/vendor/autoload.php');
+
+  // Or library directly
+  // require_once('LatexTools.php');
+
   $latexTools = new LatexTools();
   $latexTools->renderIntoResponse('(\frac{\beta }{\mu})^\beta {\Gamma(\beta )} \,  e^{-\frac{V\,\beta }{\mu }} \label{gamma}');
 ```
