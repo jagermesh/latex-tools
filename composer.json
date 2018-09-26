@@ -1,5 +1,6 @@
 {
   "name": "jagermesh/latex-tools",
+  "type": "library",
   "description": "Library to render LaTeX formula into image",
   "version": "1.0.0",
   "keywords": [ "LaTeX", "TexLive", "MacTex" ],
