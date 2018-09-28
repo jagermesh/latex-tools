@@ -98,9 +98,41 @@ class LatexTools {
 
   }
 
+  private function HtmlToText($html) {
+
+    $html = preg_replace('~<!DOCTYPE[^>]*?>~ism', '', $html);
+    $html = preg_replace('~<head[^>]*?>.*?</head>~ism', '', $html);
+    $html = preg_replace('~<style[^>]*?>.*?</style>~ism', '', $html);
+    $html = preg_replace('~<script[^>]*?>.*?</script>~ism', '', $html);
+    $html = preg_replace('~&nbsp;~ism', ' ', $html);
+    $html = preg_replace("~<br[^>]*>[\n]+~ism", "\n", $html);
+    $html = preg_replace("~<br[^>]*>~ism", "\n", $html);
+    $html = preg_replace('~<[A-Z][^>]*?>~ism', '', $html);
+    $html = preg_replace('~<\/[A-Z][^>]*?>~ism', '', $html);
+    $html = preg_replace('~<!--.*?-->~ism', ' ', $html);
+    $html = preg_replace('~^[ ]+$~ism', '', $html);
+    $html = preg_replace('~^[ ]+~ism', '', $html);
+    $html = preg_replace("~^(\n\r){2,}~ism", "\n", $html);
+    $html = preg_replace("~^(\r\n){2,}~ism", "\n", $html);
+    $html = preg_replace("~^(\n){2,}~ism", "\n", $html);
+    $html = preg_replace("~^(\r){2,}~ism", "\n", $html);
+
+    $flags = ENT_COMPAT;
+    if (defined('ENT_HTML401')) {
+      $flags = $flags | ENT_HTML401;
+    }
+    $html = html_entity_decode($html, $flags, 'UTF-8');
+
+    return trim($html);
+
+  }
+
   private function renderSimpleImage($formula, $params = array()) {
 
     $params = $this->assembleParams($params);
+    $params['format'] = 'fallback';
+
+    $formula = $this->HtmlToText($formula);
 
     $formulaHash = $this->getFormulaHash($formula, $params);
 
@@ -169,6 +201,10 @@ class LatexTools {
   private function render($formula, $params = array()) {
 
     $params = $this->assembleParams($params);
+    $params['format'] = 'image';
+
+    $formula = iconv("UTF-8","ISO-8859-1//IGNORE", $formula);
+    $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
     $formulaHash = $this->getFormulaHash($formula, $params);
 
@@ -224,7 +260,7 @@ class LatexTools {
           $output = join('\n', $output);
 
           if (($retval > 0) || preg_match('/Emergency stop/i', $output) || !file_exists($dviFile) || (0 === filesize($dviFile))) {
-            throw new Exception('Can not compile LaTeX formula' );
+            throw new Exception('Can not compile LaTeX formula');
           }
 
         } catch (Exception $e) {
