@@ -10,7 +10,7 @@ class LatexTools {
 
   private $density = 160;
   private $fallbackToImage = true;
-  private $fallbackImageFontName = __DIR__ . '/fonts/PlayfairDisplay-Regular.ttf';
+  private $fallbackImageFontName = __DIR__ . '/fonts/PT_Serif-Web-Regular.ttf';
   private $fallbackImageFontSize = 16;
 
   function __construct($params = array()) {
@@ -158,9 +158,9 @@ class LatexTools {
       $formula = wordwrap($formula, 60);
 
       if ($box = @imagettfbbox($fontSize, 0, $fontName, $formula)) {
-        $deltaY = abs($box[5]);
+        $deltaY = abs($box[5]) + 2;
         $width  = $box[2];
-        $height = $box[1] + $deltaY;
+        $height = $box[1] + $deltaY + 4;
 
         $image = imagecreatetruecolor($width, $height);
 
