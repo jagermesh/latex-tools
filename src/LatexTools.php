@@ -5,8 +5,8 @@ class LatexTools {
   private $pathToLatexTool = '';
   private $pathToDviPngTool = '';
 
-  private $cacheDir = '/tmp';
-  private $tempDir = '/tmp';
+  private $cachePath = '/tmp/';
+  private $tempPath = '/tmp/';
 
   private $density = 160;
   private $fallbackToImage = true;
@@ -43,12 +43,12 @@ class LatexTools {
       throw new Exception('dvipng not installed');
     }
 
-    if (array_key_exists('cacheDir', $params)) {
-      $this->setCacheDir($params['cacheDir']);
+    if (array_key_exists('cachePath', $params)) {
+      $this->setCachePath($params['cachePath']);
     }
 
-    if (array_key_exists('tempDir', $params)) {
-      $this->setTempDir($params['tempDir']);
+    if (array_key_exists('tempPath', $params)) {
+      $this->setTempPath($params['tempPath']);
     }
 
     if (array_key_exists('density', $params)) {
@@ -80,6 +80,7 @@ class LatexTools {
     $result['fallbackImageFontName'] = array_key_exists('fallbackImageFontName', $result) ? $result['fallbackImageFontName'] : $this->fallbackImageFontName;
     $result['fallbackImageFontSize'] = array_key_exists('fallbackImageFontSize', $result) ? $result['fallbackImageFontSize'] : $this->fallbackImageFontSize;
     $result['checkOnly']             = array_key_exists('checkOnly', $result) ? $result['checkOnly'] : false;
+    $result['debug']                 = array_key_exists('debug', $result) ? $result['debug'] : false;
 
     if ($result['checkOnly']) {
       $result['fallbackToImage'] = false;
@@ -140,7 +141,7 @@ class LatexTools {
       $outputFile = $params['outputFile'];
     } else {
       $outputFileName = 'latex-' . $formulaHash . '.png';
-      $outputFile = rtrim($this->cacheDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $outputFileName;
+      $outputFile = $this->getCachePath() . $outputFileName;
     }
 
     if (file_exists($outputFile)) {
@@ -212,38 +213,47 @@ class LatexTools {
       $outputFile = $params['outputFile'];
     } else {
       $outputFileName = 'latex-' . $formulaHash . '.png';
-      $outputFile = rtrim($this->cacheDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $outputFileName;
+      $outputFile = $this->getCachePath() . $outputFileName;
     }
 
     if (!$params['checkOnly'] && file_exists($outputFile) && (filesize($outputFile) > 0)) {
       return $outputFile;
     } else {
       $tempFileName = 'latex-' . $formulaHash . '.tex';
-      $tempFile = rtrim($this->tempDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $tempFileName;
+      $tempFile = $this->getTempPath() . $tempFileName;
 
       $auxFileName = 'latex-' . $formulaHash . '.aux';
-      $auxFile = rtrim($this->tempDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $auxFileName;
+      $auxFile = $this->getTempPath() . $auxFileName;
 
       $logFileName = 'latex-' . $formulaHash . '.log';
-      $logFile = rtrim($this->tempDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $logFileName;
+      $logFile = $this->getTempPath() . $logFileName;
 
       $dviFileName = 'latex-' . $formulaHash . '.dvi';
-      $dviFile = rtrim($this->tempDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $dviFileName;
+      $dviFile = $this->getTempPath() . $dviFileName;
 
       try {
 
-        $latexDocument  = '\documentclass[12pt]{article}' . "\n";
+        $latexDocument  = '';
+        $latexDocument .= '\documentclass{article}' . "\n";
         $latexDocument .= '\usepackage[utf8]{inputenc}' . "\n";
-        $latexDocument .= '\usepackage{amssymb,amsmath}' . "\n";
-        $latexDocument .= '\usepackage{color}' . "\n";
+        $latexDocument .= '\usepackage{amsmath}' . "\n";
         $latexDocument .= '\usepackage{amsfonts}' . "\n";
+        $latexDocument .= '\usepackage{amsthm}' . "\n";
         $latexDocument .= '\usepackage{amssymb}' . "\n";
+        $latexDocument .= '\usepackage{amstext}' . "\n";
+        $latexDocument .= '\usepackage{color}' . "\n";
         $latexDocument .= '\usepackage{pst-plot}' . "\n";
         $latexDocument .= '\begin{document}' . "\n";
         $latexDocument .= '\pagestyle{empty}' . "\n";
-        $latexDocument .= '\begin{displaymath}' . "\n";
+        // $latexDocument .= '\begin{math}' . "\n";
+        // $latexDocument .= '\begin{multline*}' . "\n";
+        // $latexDocument .= '\begin{align*}' . "\n";
+        $latexDocument .= '\begin{gather*}' . "\n";
         $latexDocument .= $formula . "\n";
-        $latexDocument .= '\end{displaymath}'."\n";
+        $latexDocument .= '\end{gather*}' . "\n";
+        // $latexDocument .= '\end{align*}' . "\n";
+        // $latexDocument .= '\end{multline*}' . "\n";
+        // $latexDocument .= '\end{math}'."\n";
         $latexDocument .= '\end{document}'."\n";
 
         if (@file_put_contents($tempFile, $latexDocument) === false) {
@@ -251,11 +261,23 @@ class LatexTools {
         }
 
         try {
-          $command = 'cd ' . $this->tempDir . '; ' . $this->pathToLatexTool . ' ' . $tempFileName . ' < /dev/null';
+          $command = 'cd ' . $this->getTempPath() . '; ' . $this->pathToLatexTool . ' ' . $tempFileName . ' < /dev/null';
           $output = '';
           $retval = '';
 
+          if ($params['debug']) {
+            echo('<pre>' . $formula . '</pre>');
+            echo('<pre>' . $command . '</pre>');
+          }
+
           exec($command, $output, $retval);
+
+          if ($params['debug']) {
+            echo('<pre>');
+            print_r($output);
+            echo('</pre>');
+            exit();
+          }
 
           $output = join('\n', $output);
 
@@ -340,27 +362,27 @@ class LatexTools {
 
   }
 
-  public function setCacheDir($value) {
+  public function setCachePath($value) {
 
-    $this->cacheDir = $value;
-
-  }
-
-  public function getCacheDir() {
-
-    return $this->cacheDir;
+    $this->cachePath = rtrim($value, '/') . '/';
 
   }
 
-  public function setTempDir($value) {
+  public function getCachePath() {
 
-    $this->tempDir = $value;
+    return $this->cachePath;
 
   }
 
-  public function getTempDir() {
+  public function setTempPath($value) {
 
-    return $this->tempDir;
+    $this->tempPath = rtrim($value, '/') . '/';
+
+  }
+
+  public function getTempPath() {
+
+    return $this->tempPath;
 
   }
 

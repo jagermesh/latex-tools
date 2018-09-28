@@ -107,11 +107,11 @@ $result = $latexTools->isValidLaTeX($formula);
 Set directory for cache files (`/tmp` by default)
 
 ```php
-$latexTools->setCacheDir($value);
+$latexTools->setCachePath($value);
 ```
 
 Set directory for temp files (`/tmp` by default)
 
 ```php
-$latexTools->setTempDir($value);
+$latexTools->setTempPath($value);
 ```
