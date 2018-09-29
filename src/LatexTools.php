@@ -5,8 +5,8 @@ class LatexTools {
   private $pathToLatexTool = '';
   private $pathToDviPngTool = '';
 
-  private $cachePath = '/tmp/';
-  private $tempPath = '/tmp/';
+  private $cachePath;
+  private $tempPath;
 
   private $density = 160;
   private $fallbackToImage = true;
@@ -370,7 +370,24 @@ class LatexTools {
 
   public function getCachePath() {
 
-    return $this->cachePath;
+    if ($this->cachePath) {
+      $result = $this->cachePath;
+    } else {
+      $result = sys_get_temp_dir();
+    }
+
+    if (!is_dir($result)) {
+      br()->fs()->makeDir($result, 0777);
+    }
+
+    if (!is_dir($result) || !is_writable($result)) {
+      $result = rtrim(sys_get_temp_dir(), '/') . '/';
+      if ($this->cachePath) {
+        $result .= md5($this->cachePath) . '/';
+      }
+    }
+
+    return $result;
 
   }
 
@@ -382,7 +399,24 @@ class LatexTools {
 
   public function getTempPath() {
 
-    return $this->tempPath;
+    if ($this->tempPath) {
+      $result = $this->tempPath;
+    } else {
+      $result = sys_get_temp_dir();
+    }
+
+    if (!is_dir($result)) {
+      br()->fs()->makeDir($result, 0777);
+    }
+
+    if (!is_dir($result) || !is_writable($result)) {
+      $result = rtrim(sys_get_temp_dir(), '/') . '/';
+      if ($this->tempPath) {
+        $result .= md5($this->tempPath) . '/';
+      }
+    }
+
+    return $result;
 
   }
 
