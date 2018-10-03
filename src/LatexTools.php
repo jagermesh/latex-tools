@@ -207,7 +207,30 @@ class LatexTools {
     $formula = iconv("UTF-8","ISO-8859-1//IGNORE", $formula);
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
-    $formulaHash = $this->getFormulaHash($formula, $params);
+    $latexDocument  = '';
+    $latexDocument .= '\documentclass{article}' . "\n";
+    $latexDocument .= '\usepackage[utf8]{inputenc}' . "\n";
+    $latexDocument .= '\usepackage{amsmath}' . "\n";
+    $latexDocument .= '\usepackage{amsfonts}' . "\n";
+    $latexDocument .= '\usepackage{amsthm}' . "\n";
+    $latexDocument .= '\usepackage{amssymb}' . "\n";
+    $latexDocument .= '\usepackage{amstext}' . "\n";
+    $latexDocument .= '\usepackage{color}' . "\n";
+    $latexDocument .= '\usepackage{pst-plot}' . "\n";
+    $latexDocument .= '\begin{document}' . "\n";
+    $latexDocument .= '\pagestyle{empty}' . "\n";
+    $latexDocument .= '\begin{math}' . "\n";
+    // $latexDocument .= '\begin{multline*}' . "\n";
+    // $latexDocument .= '\begin{align*}' . "\n";
+    // $latexDocument .= '\begin{gather*}' . "\n";
+    $latexDocument .= $formula . "\n";
+    // $latexDocument .= '\end{gather*}' . "\n";
+    // $latexDocument .= '\end{align*}' . "\n";
+    // $latexDocument .= '\end{multline*}' . "\n";
+    $latexDocument .= '\end{math}'."\n";
+    $latexDocument .= '\end{document}'."\n";
+
+    $formulaHash = $this->getFormulaHash($latexDocument, $params);
 
     if (array_key_exists('outputFile', $params)) {
       $outputFile = $params['outputFile'];
@@ -232,29 +255,6 @@ class LatexTools {
       $dviFile = $this->getTempPath() . $dviFileName;
 
       try {
-
-        $latexDocument  = '';
-        $latexDocument .= '\documentclass{article}' . "\n";
-        $latexDocument .= '\usepackage[utf8]{inputenc}' . "\n";
-        $latexDocument .= '\usepackage{amsmath}' . "\n";
-        $latexDocument .= '\usepackage{amsfonts}' . "\n";
-        $latexDocument .= '\usepackage{amsthm}' . "\n";
-        $latexDocument .= '\usepackage{amssymb}' . "\n";
-        $latexDocument .= '\usepackage{amstext}' . "\n";
-        $latexDocument .= '\usepackage{color}' . "\n";
-        $latexDocument .= '\usepackage{pst-plot}' . "\n";
-        $latexDocument .= '\begin{document}' . "\n";
-        $latexDocument .= '\pagestyle{empty}' . "\n";
-        // $latexDocument .= '\begin{math}' . "\n";
-        // $latexDocument .= '\begin{multline*}' . "\n";
-        // $latexDocument .= '\begin{align*}' . "\n";
-        $latexDocument .= '\begin{gather*}' . "\n";
-        $latexDocument .= $formula . "\n";
-        $latexDocument .= '\end{gather*}' . "\n";
-        // $latexDocument .= '\end{align*}' . "\n";
-        // $latexDocument .= '\end{multline*}' . "\n";
-        // $latexDocument .= '\end{math}'."\n";
-        $latexDocument .= '\end{document}'."\n";
 
         if (@file_put_contents($tempFile, $latexDocument) === false) {
           throw new Exception('Can not create temporary formula file at ' . $tempFile);
