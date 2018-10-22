@@ -61,7 +61,7 @@ In above calls `$params` could be any of these values:
 - `fallbackImageFontName` - font name for regular image (`fonts/PlayfairDisplay-Regular.ttf` by default)
 - `fallbackImageFontSize` - font size for regular image (`16` by default)
 
-Also these paramatares could be set globally. Please see below.
+Also these parameters could be set globally. Please see below.
 
 Set formula density (`160` by default)
 
