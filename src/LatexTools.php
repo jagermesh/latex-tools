@@ -135,6 +135,9 @@ class LatexTools {
 
     $formula = $this->HtmlToText($formula);
 
+    $formula = str_replace('\\ ', ' ' , $formula);
+    $formula = str_replace('\\\\', "\n" , $formula);
+
     $formulaHash = $this->getFormulaHash($formula, $params);
 
     if (array_key_exists('outputFile', $params)) {
@@ -217,6 +220,7 @@ class LatexTools {
     $latexDocument .= '\usepackage{amstext}' . "\n";
     $latexDocument .= '\usepackage{color}' . "\n";
     $latexDocument .= '\usepackage{pst-plot}' . "\n";
+    $latexDocument .= '\usepackage{graphicx}' . "\n";
     $latexDocument .= '\begin{document}' . "\n";
     $latexDocument .= '\pagestyle{empty}' . "\n";
     $latexDocument .= '\begin{math}' . "\n";
