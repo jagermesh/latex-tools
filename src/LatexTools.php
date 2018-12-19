@@ -202,6 +202,30 @@ class LatexTools {
 
   }
 
+  private function processImages($formula) {
+
+    $result = $formula;
+
+    while(preg_match('/\\includegraphics[{]([^:]+?):data:image\/([a-z]+);base64,([^}]+?)[}]/ism', $result, $matches)) {
+      try {
+        $imageType = $matches[2];
+        $packedImage = $matches[3];
+        $fileName = md5($packedImage) . '.' . $imageType;
+        $filePath = rtrim(sys_get_temp_dir(), '/') . '/';
+        file_put_contents($filePath . $fileName, base64_decode($packedImage));
+        $image = ImageCreateFromPNG($filePath . $fileName);
+        $imageWidth = imagesx($image);
+        $imageHeight = imagesy($image);
+        $result = str_replace($matches[0], "\n" . '\\\\\\graphicspath{ {' . $filePath . '} } \\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . $fileName . '}\\\\', $result);
+      } catch (Exception $e) {
+        $result = str_replace($matches[0], '', $result);
+      }
+    }
+
+    return $result;
+
+  }
+
   private function render($formula, $params = array()) {
 
     $params = $this->assembleParams($params);
@@ -209,6 +233,8 @@ class LatexTools {
 
     $formula = iconv("UTF-8","ISO-8859-1//IGNORE", $formula);
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
+
+    $formula = $this->processImages($formula);
 
     $latexDocument  = '';
     $latexDocument .= '\documentclass{article}' . "\n";
@@ -221,6 +247,7 @@ class LatexTools {
     $latexDocument .= '\usepackage{color}' . "\n";
     $latexDocument .= '\usepackage{pst-plot}' . "\n";
     $latexDocument .= '\usepackage{graphicx}' . "\n";
+    $latexDocument .= '\usepackage{graphics}' . "\n";
     $latexDocument .= '\begin{document}' . "\n";
     $latexDocument .= '\pagestyle{empty}' . "\n";
     $latexDocument .= '\begin{math}' . "\n";
