@@ -202,6 +202,12 @@ class LatexTools {
 
   }
 
+  private function checkImages($formula) {
+
+    return preg_match('/\\includegraphics[{]([^:]+?):data:image\/([a-z]+);base64,([^}]+?)[}]/ism', $formula);
+
+  }
+
   private function processImages($formula) {
 
     $result = $formula;
@@ -216,7 +222,7 @@ class LatexTools {
         $image = ImageCreateFromPNG($filePath . $fileName);
         $imageWidth = imagesx($image);
         $imageHeight = imagesy($image);
-        $result = str_replace($matches[0], "\n" . '\\\\\\graphicspath{ {' . $filePath . '} } \\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . $fileName . '}\\\\', $result);
+        $result = str_replace($matches[0], "\n" . '\\\\\\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . $fileName . '}\\\\', $result);
       } catch (Exception $e) {
         $result = str_replace($matches[0], '', $result);
       }
@@ -234,7 +240,9 @@ class LatexTools {
     $formula = iconv("UTF-8","ISO-8859-1//IGNORE", $formula);
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
-    $formula = $this->processImages($formula);
+    // if ($imagesExists = $this->checkImages($formula)) {
+      $formula = $this->processImages($formula);
+    // }
 
     $latexDocument  = '';
     $latexDocument .= '\documentclass{article}' . "\n";
@@ -250,15 +258,21 @@ class LatexTools {
     $latexDocument .= '\usepackage{graphics}' . "\n";
     $latexDocument .= '\begin{document}' . "\n";
     $latexDocument .= '\pagestyle{empty}' . "\n";
-    $latexDocument .= '\begin{math}' . "\n";
-    // $latexDocument .= '\begin{multline*}' . "\n";
+    // if ($imagesExists) {
+      // $latexDocument .= '\begin{multline*}' . "\n";
+    // } else {
+      $latexDocument .= '\begin{math}' . "\n";
+    // }
     // $latexDocument .= '\begin{align*}' . "\n";
     // $latexDocument .= '\begin{gather*}' . "\n";
     $latexDocument .= $formula . "\n";
     // $latexDocument .= '\end{gather*}' . "\n";
     // $latexDocument .= '\end{align*}' . "\n";
-    // $latexDocument .= '\end{multline*}' . "\n";
-    $latexDocument .= '\end{math}'."\n";
+    // if ($imagesExists) {
+      // $latexDocument .= '\end{multline*}' . "\n";
+    // } else {
+      $latexDocument .= '\end{math}'."\n";
+    // }
     $latexDocument .= '\end{document}'."\n";
 
     $formulaHash = $this->getFormulaHash($latexDocument, $params);
