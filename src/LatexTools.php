@@ -304,15 +304,19 @@ class LatexTools {
     } else {
       $tempFileName = 'latex-' . $formulaHash . '.tex';
       $tempFile = $this->getTempPath() . $tempFileName;
+      $tempFiles[] = $tempFile;
 
       $auxFileName = 'latex-' . $formulaHash . '.aux';
       $auxFile = $this->getTempPath() . $auxFileName;
+      $tempFiles[] = $auxFile;
 
       $logFileName = 'latex-' . $formulaHash . '.log';
       $logFile = $this->getTempPath() . $logFileName;
+      $tempFiles[] = $logFile;
 
       $dviFileName = 'latex-' . $formulaHash . '.dvi';
       $dviFile = $this->getTempPath() . $dviFileName;
+      $tempFiles[] = $dviFile;
 
       try {
 
@@ -378,21 +382,10 @@ class LatexTools {
 
       } finally {
 
-        if (file_exists($tempFile)) {
-          unlink($tempFile);
-        }
-        if (file_exists($auxFile)) {
-          unlink($auxFile);
-        }
-        if (file_exists($logFile)) {
-          unlink($logFile);
-        }
-        if (file_exists($dviFile)) {
-          unlink($dviFile);
-        }
-
         foreach($tempFiles as $tempFile) {
-          unlink($tempFile);
+          if (file_exists($tempFile)) {
+            @unlink($tempFile);
+          }
         }
 
       }
