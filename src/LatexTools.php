@@ -219,10 +219,13 @@ class LatexTools {
         $fileName = md5($packedImage) . '.' . $imageType;
         $filePath = rtrim(sys_get_temp_dir(), '/') . '/';
         file_put_contents($filePath . $fileName, base64_decode($packedImage));
-        $image = ImageCreateFromPNG($filePath . $fileName);
-        $imageWidth = imagesx($image);
-        $imageHeight = imagesy($image);
-        $result = str_replace($matches[0], "\n" . '\\\\\\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . $fileName . '}\\\\', $result);
+        if ($image = @imagecreatefrompng($filePath . $fileName)) {
+          $imageWidth = imagesx($image);
+          $imageHeight = imagesy($image);
+          $result = str_replace($matches[0], "\n" . '\\\\\\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . $fileName . '}\\\\', $result);
+        } else {
+          throw new Exception('Error');
+        }
       } catch (Exception $e) {
         $result = str_replace($matches[0], '', $result);
       }
@@ -339,13 +342,26 @@ class LatexTools {
         }
 
         $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
-        $output = '';
-        $retval = '';
 
-        exec($command, $output, $retval);
+        $retries = 10;
 
-        if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
-          throw new Exception('Can not convert DVI file to PNG');
+        while (true) {
+          $retries--;
+
+          $output = '';
+          $retval = '';
+
+          exec($command, $output, $retval);
+
+          if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
+            if ($retries <= 0) {
+              if (!file_exists($outputFile) || (0 === filesize($outputFile))) {
+                throw new Exception('Can not convert DVI file to PNG');
+              }
+            }
+          } else {
+            break;
+          }
         }
 
       } finally {
