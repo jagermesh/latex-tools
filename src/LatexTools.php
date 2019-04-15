@@ -210,24 +210,28 @@ class LatexTools {
 
   private function processImages($formula) {
 
-    $result = $formula;
+    $result = ['formula' => $formula, 'tempFiles' => [] ];
 
-    while(preg_match('/\\includegraphics[{]([^:]+?):data:image\/([a-z]+);base64,([^}]+?)[}]/ism', $result, $matches)) {
+    while(preg_match('/\\includegraphics[{]([^:]+?):data:image\/([a-z]+);base64,([^}]+?)[}]/ism', $result['formula'], $matches)) {
       try {
         $imageType = $matches[2];
         $packedImage = $matches[3];
         $fileName = md5($packedImage) . '.' . $imageType;
-        $filePath = rtrim(sys_get_temp_dir(), '/') . '/';
-        file_put_contents($filePath . $fileName, base64_decode($packedImage));
-        if ($image = @imagecreatefrompng($filePath . $fileName)) {
-          $imageWidth = imagesx($image);
-          $imageHeight = imagesy($image);
-          $result = str_replace($matches[0], "\n" . '\\\\\\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . $fileName . '}\\\\', $result);
+        $filePath = $this->getTempPath() . $fileName;
+        if (file_put_contents($filePath, base64_decode($packedImage))) {
+          $result['tempFiles'][] = $filePath;
+          if ($image = @imagecreatefrompng($filePath)) {
+            $imageWidth = imagesx($image);
+            $imageHeight = imagesy($image);
+            $result['formula'] = str_replace($matches[0], "\n" . '\\\\\\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . '}\\\\', $result['formula']);
+          } else {
+            throw new Exception('Error');
+          }
         } else {
           throw new Exception('Error');
         }
       } catch (Exception $e) {
-        $result = str_replace($matches[0], '', $result);
+        $result['formula'] = str_replace($matches[0], '', $result['formula']);
       }
     }
 
@@ -244,7 +248,10 @@ class LatexTools {
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
     // if ($imagesExists = $this->checkImages($formula)) {
-      $formula = $this->processImages($formula);
+    $images = $this->processImages($formula);
+
+    $formula   = $images['formula'];
+    $tempFiles = $images['tempFiles'];
     // }
 
     $latexDocument  = '';
@@ -261,21 +268,26 @@ class LatexTools {
     $latexDocument .= '\usepackage{graphics}' . "\n";
     $latexDocument .= '\begin{document}' . "\n";
     $latexDocument .= '\pagestyle{empty}' . "\n";
+
     // if ($imagesExists) {
-      // $latexDocument .= '\begin{multline*}' . "\n";
+    //   $latexDocument .= '\begin{multline*}' . "\n";
     // } else {
-      $latexDocument .= '\begin{math}' . "\n";
+    //   $latexDocument .= '\begin{math}' . "\n";
     // }
     // $latexDocument .= '\begin{align*}' . "\n";
-    // $latexDocument .= '\begin{gather*}' . "\n";
+    $latexDocument .= '\begin{gather*}' . "\n";
+
     $latexDocument .= $formula . "\n";
-    // $latexDocument .= '\end{gather*}' . "\n";
+
+    $latexDocument .= '\end{gather*}' . "\n";
     // $latexDocument .= '\end{align*}' . "\n";
+
     // if ($imagesExists) {
-      // $latexDocument .= '\end{multline*}' . "\n";
+    //   $latexDocument .= '\end{multline*}' . "\n";
     // } else {
-      $latexDocument .= '\end{math}'."\n";
+    //   $latexDocument .= '\end{math}'."\n";
     // }
+
     $latexDocument .= '\end{document}'."\n";
 
     $formulaHash = $this->getFormulaHash($latexDocument, $params);
@@ -379,6 +391,10 @@ class LatexTools {
           unlink($dviFile);
         }
 
+        foreach($tempFiles as $tempFile) {
+          unlink($tempFile);
+        }
+
       }
 
       return $outputFile;
@@ -429,6 +445,20 @@ class LatexTools {
 
   }
 
+  public function makeDir($path, $access = 0777) {
+
+    if (file_exists($path)) {
+      return true;
+    }
+
+    try {
+      return @mkdir($path, $access, true);
+    } catch (\Exception $e) {
+      return false;
+    }
+
+  }
+
   public function getCachePath() {
 
     if ($this->cachePath) {
@@ -438,7 +468,7 @@ class LatexTools {
     }
 
     if (!is_dir($result)) {
-      br()->fs()->makeDir($result, 0777);
+      $this->makeDir($result, 0777);
     }
 
     if (!is_dir($result) || !is_writable($result)) {
@@ -471,7 +501,7 @@ class LatexTools {
     }
 
     if (!is_dir($result)) {
-      br()->fs()->makeDir($result, 0777);
+      $this->makeDir($result, 0777);
     }
 
     if (!is_dir($result) || !is_writable($result)) {
