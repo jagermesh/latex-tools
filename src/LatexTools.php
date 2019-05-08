@@ -212,10 +212,11 @@ class LatexTools {
 
     $result = ['formula' => $formula, 'tempFiles' => [] ];
 
-    while(preg_match('/\\includegraphics[{]([^:]+?):data:image\/([a-z]+);base64,([^}]+?)[}]/ism', $result['formula'], $matches)) {
+    while(preg_match('/[\\\]includegraphics[{].*?data:image\/([a-z]+);base64,([^}]+?)[}]/ism', $result['formula'], $matches)) {
       try {
-        $imageType = $matches[2];
-        $packedImage = $matches[3];
+        // throw new \Exception('a');
+        $imageType = $matches[1];
+        $packedImage = $matches[2];
         $fileName = md5($packedImage) . '.' . $imageType;
         $filePath = $this->getTempPath() . $fileName;
         if (file_put_contents($filePath, base64_decode($packedImage))) {
@@ -223,7 +224,7 @@ class LatexTools {
           if ($image = @imagecreatefrompng($filePath)) {
             $imageWidth = imagesx($image);
             $imageHeight = imagesy($image);
-            $result['formula'] = str_replace($matches[0], "\n" . '\\\\\\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . '}\\\\', $result['formula']);
+            $result['formula'] = str_replace($matches[0], '\includegraphics[natwidth=' . $imageWidth . ',natheight=' . $imageHeight . ']{' . $filePath . '}\\\\', $result['formula']);
           } else {
             throw new Exception('Error');
           }
@@ -234,6 +235,8 @@ class LatexTools {
         $result['formula'] = str_replace($matches[0], '', $result['formula']);
       }
     }
+
+    // debug($result['formula']);exit();
 
     return $result;
 
@@ -247,12 +250,16 @@ class LatexTools {
     $formula = iconv("UTF-8","ISO-8859-1//IGNORE", $formula);
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
-    // if ($imagesExists = $this->checkImages($formula)) {
     $images = $this->processImages($formula);
+
+    // exit();
 
     $formula   = $images['formula'];
     $tempFiles = $images['tempFiles'];
-    // }
+
+    $formula = str_replace('#', '\\#', $formula);
+
+    // $formula = wordwrap($formula, 256, '\\\\ ');
 
     $latexDocument  = '';
     $latexDocument .= '\documentclass{article}' . "\n";
@@ -265,30 +272,14 @@ class LatexTools {
     $latexDocument .= '\usepackage{color}' . "\n";
     $latexDocument .= '\usepackage{pst-plot}' . "\n";
     $latexDocument .= '\usepackage{graphicx}' . "\n";
-    $latexDocument .= '\usepackage{graphics}' . "\n";
     $latexDocument .= '\begin{document}' . "\n";
     $latexDocument .= '\pagestyle{empty}' . "\n";
-
-    // if ($imagesExists) {
-    //   $latexDocument .= '\begin{multline*}' . "\n";
-    // } else {
-    //   $latexDocument .= '\begin{math}' . "\n";
-    // }
-    // $latexDocument .= '\begin{align*}' . "\n";
     $latexDocument .= '\begin{gather*}' . "\n";
-
-    $latexDocument .= $formula . "\n";
-
+    $latexDocument .= trim($formula) . "\n";
     $latexDocument .= '\end{gather*}' . "\n";
-    // $latexDocument .= '\end{align*}' . "\n";
-
-    // if ($imagesExists) {
-    //   $latexDocument .= '\end{multline*}' . "\n";
-    // } else {
-    //   $latexDocument .= '\end{math}'."\n";
-    // }
-
     $latexDocument .= '\end{document}'."\n";
+
+    // debug($latexDocument);exit();
 
     $formulaHash = $this->getFormulaHash($latexDocument, $params);
 
@@ -325,7 +316,7 @@ class LatexTools {
         }
 
         try {
-          $command = 'cd ' . $this->getTempPath() . '; ' . $this->pathToLatexTool . ' ' . $tempFileName . ' < /dev/null';
+          $command = 'cd ' . $this->getTempPath() . '; ' . $this->pathToLatexTool . ' --interaction=nonstopmode ' . $tempFileName . ' < /dev/null';
           $output = '';
           $retval = '';
 
@@ -361,22 +352,14 @@ class LatexTools {
 
         $retries = 10;
 
-        while (true) {
-          $retries--;
+        $output = '';
+        $retval = '';
 
-          $output = '';
-          $retval = '';
+        exec($command, $output, $retval);
 
-          exec($command, $output, $retval);
-
-          if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
-            if ($retries <= 0) {
-              if (!file_exists($outputFile) || (0 === filesize($outputFile))) {
-                throw new Exception('Can not convert DVI file to PNG');
-              }
-            }
-          } else {
-            break;
+        if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
+          if (!file_exists($outputFile) || (0 === filesize($outputFile))) {
+            throw new Exception('Can not convert DVI file to PNG');
           }
         }
 
