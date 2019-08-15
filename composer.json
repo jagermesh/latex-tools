@@ -17,8 +17,5 @@
     "psr-0": {
         "LatexTools": "src/"
     }
-  },
-  "scripts": {
-    "hooks": ["rm -rf .git/hooks", "ln -s ../bright/tools/git-hooks .git/hooks", "chmod +x .git/hooks/pre-commit", "chmod +x .git/hooks/prepare-commit-msg"]
   }
 }
