@@ -5,17 +5,20 @@
   "keywords": [ "LaTeX", "TexLive", "MacTex" ],
   "license": "MIT",
   "authors": [
-      {
-          "name": "Sergiy Lavryk",
-          "email": "jagermesh@gmail.com"
-      }
+    {
+      "name": "Sergiy Lavryk",
+      "email": "jagermesh@gmail.com"
+    }
   ],
   "require": {
-      "php": ">=5.3"
+    "php": ">=5.3"
   },
   "autoload": {
-      "psr-0": {
-          "LatexTools": "src/"
-      }
+    "psr-0": {
+        "LatexTools": "src/"
+    }
+  },
+  "scripts": {
+    "hooks": ["rm -rf .git/hooks", "ln -s ../bright/tools/git-hooks .git/hooks", "chmod +x .git/hooks/pre-commit", "chmod +x .git/hooks/prepare-commit-msg"]
   }
 }
