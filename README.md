@@ -12,8 +12,10 @@ Library to render LaTeX formula into image
 
 - Install MacTex from [https://tug.org/mactex/](https://tug.org/mactex/)
 - Install dvipng
-```$ sudo tlmgr update --self```
-```$ sudo tlmgr install dvipng```
+```
+$ sudo tlmgr update --self
+$ sudo tlmgr install dvipng
+```
 
 ## Installation
 
