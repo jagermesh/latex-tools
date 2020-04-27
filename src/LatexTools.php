@@ -250,6 +250,8 @@ class LatexTools {
     $formula = iconv("UTF-8","ISO-8859-1//IGNORE", $formula);
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
+    $formula = str_replace('\\text{img_}', '', $formula);
+
     $images = $this->processImages($formula);
 
     // exit();

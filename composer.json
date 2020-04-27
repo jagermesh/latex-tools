@@ -3,6 +3,7 @@
   "type": "library",
   "description": "Library to render LaTeX formula into image",
   "keywords": [ "LaTeX", "TexLive", "MacTex" ],
+  "version": "1.0.14",
   "license": "MIT",
   "authors": [
     {
