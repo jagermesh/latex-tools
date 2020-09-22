@@ -282,6 +282,9 @@ class LatexTools {
     $latexDocument .= '\end{document}'."\n";
 
     // debug($latexDocument);exit();
+    if ($params['debug']) {
+      echo('<pre>' . $latexDocument . '</pre>');
+    }
 
     $formulaHash = $this->getFormulaHash($latexDocument, $params);
 
@@ -333,7 +336,6 @@ class LatexTools {
             echo('<pre>');
             print_r($output);
             echo('</pre>');
-            exit();
           }
 
           $output = join('\n', $output);
@@ -350,12 +352,17 @@ class LatexTools {
           }
         }
 
-        $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
+        // $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
+        $command = $this->pathToDviPngTool . ' -q ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
 
         $retries = 10;
 
         $output = '';
         $retval = '';
+
+        if ($params['debug']) {
+          echo('<pre>' . $command . '</pre>');
+        }
 
         exec($command, $output, $retval);
 
