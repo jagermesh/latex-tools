@@ -266,6 +266,14 @@ class LatexTools {
 
     $latexDocument  = '';
     $latexDocument .= '\documentclass{article}' . "\n";
+    $latexDocument .= '\usepackage%' . "\n" .
+                      '[%' . "\n" .
+                      'left=0cm,' . "\n" .
+                      'right=0cm,' . "\n" .
+                      'top=0cm,' . "\n" .
+                      'bottom=0cm,' . "\n" .
+                      'a5paper' . "\n" .
+                      ']{geometry}' . "\n";
     $latexDocument .= '\usepackage[utf8]{inputenc}' . "\n";
     $latexDocument .= '\usepackage{amsmath}' . "\n";
     $latexDocument .= '\usepackage{amsfonts}' . "\n";
@@ -277,118 +285,126 @@ class LatexTools {
     $latexDocument .= '\usepackage{graphicx}' . "\n";
     $latexDocument .= '\begin{document}' . "\n";
     $latexDocument .= '\pagestyle{empty}' . "\n";
-    $latexDocument .= '\begin{gather*}' . "\n";
-    $latexDocument .= trim($formula) . "\n";
-    $latexDocument .= '\end{gather*}' . "\n";
-    $latexDocument .= '\end{document}'."\n";
 
-    // debug($latexDocument);exit();
-    if ($params['debug']) {
-      echo('<pre>' . $latexDocument . '</pre>');
-    }
+    $latexDocuments = [];
+    $latexDocuments[] = $latexDocument . "\n" .
+                                         trim($formula) . "\n" .
+                                         '\end{document}'."\n";
+    $latexDocuments[] = $latexDocument . "\n" .
+                                         '\begin{gather*}' . "\n" .
+                                         trim($formula) . "\n" .
+                                         '\end{gather*}' . "\n" .
+                                         '\end{document}'."\n";
 
-    $formulaHash = $this->getFormulaHash($latexDocument, $params);
+    $exception = null;
 
-    if (array_key_exists('outputFile', $params)) {
-      $outputFile = $params['outputFile'];
-    } else {
-      $outputFileName = 'latex-' . $formulaHash . '.png';
-      $outputFile = $this->getCachePath() . $outputFileName;
-    }
+    foreach($latexDocuments as $latexDocument) {
+      if ($params['debug']) {
+        echo('<pre>' . $latexDocument . '</pre>');
+      }
 
-    if (!$params['checkOnly'] && file_exists($outputFile) && (filesize($outputFile) > 0)) {
-      return $outputFile;
-    } else {
-      $tempFileName = 'latex-' . $formulaHash . '.tex';
-      $tempFile = $this->getTempPath() . $tempFileName;
-      $tempFiles[] = $tempFile;
+      $formulaHash = $this->getFormulaHash($latexDocument, $params);
 
-      $auxFileName = 'latex-' . $formulaHash . '.aux';
-      $auxFile = $this->getTempPath() . $auxFileName;
-      $tempFiles[] = $auxFile;
+      if (array_key_exists('outputFile', $params)) {
+        $outputFile = $params['outputFile'];
+      } else {
+        $outputFileName = 'latex-' . $formulaHash . '.png';
+        $outputFile = $this->getCachePath() . $outputFileName;
+      }
 
-      $logFileName = 'latex-' . $formulaHash . '.log';
-      $logFile = $this->getTempPath() . $logFileName;
-      $tempFiles[] = $logFile;
+      if (!$params['checkOnly'] && file_exists($outputFile) && (filesize($outputFile) > 0)) {
+        return $outputFile;
+      } else {
+        $tempFileName = 'latex-' . $formulaHash . '.tex';
+        $tempFile = $this->getTempPath() . $tempFileName;
+        $tempFiles[] = $tempFile;
 
-      $dviFileName = 'latex-' . $formulaHash . '.dvi';
-      $dviFile = $this->getTempPath() . $dviFileName;
-      $tempFiles[] = $dviFile;
+        $auxFileName = 'latex-' . $formulaHash . '.aux';
+        $auxFile = $this->getTempPath() . $auxFileName;
+        $tempFiles[] = $auxFile;
 
-      try {
+        $logFileName = 'latex-' . $formulaHash . '.log';
+        $logFile = $this->getTempPath() . $logFileName;
+        $tempFiles[] = $logFile;
 
-        if (@file_put_contents($tempFile, $latexDocument) === false) {
-          throw new Exception('Can not create temporary formula file at ' . $tempFile);
-        }
-
+        $dviFileName = 'latex-' . $formulaHash . '.dvi';
+        $dviFile = $this->getTempPath() . $dviFileName;
+        $tempFiles[] = $dviFile;
+// echo($latexDocument . '<br /><br />');exit();
         try {
-          $command = 'cd ' . $this->getTempPath() . '; ' . $this->pathToLatexTool . ' --interaction=nonstopmode ' . $tempFileName . ' < /dev/null';
+          if (@file_put_contents($tempFile, $latexDocument) === false) {
+            throw new Exception('Can not create temporary formula file at ' . $tempFile);
+          }
+
+          try {
+            $command = 'cd ' . $this->getTempPath() . '; ' . $this->pathToLatexTool . ' --interaction=nonstopmode ' . $tempFileName . ' < /dev/null';
+            $output = '';
+            $retval = '';
+
+            if ($params['debug']) {
+              echo('<pre>' . $formula . '</pre>');
+              echo('<pre>' . $command . '</pre>');
+            }
+
+            exec($command, $output, $retval);
+
+            if ($params['debug']) {
+              echo('<pre>');
+              print_r($output);
+              echo('</pre>');
+            }
+
+            $output = join('\n', $output);
+
+            if (($retval > 0) || preg_match('/Emergency stop/i', $output) || !file_exists($dviFile) || (0 === filesize($dviFile))) {
+              throw new Exception('Can not compile LaTeX formula');
+            }
+
+          } catch (Exception $e) {
+            $error = $e;
+            continue;
+          }
+
+          $command = $this->pathToDviPngTool . ' -q ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
+
+          $retries = 10;
+
           $output = '';
           $retval = '';
 
           if ($params['debug']) {
-            echo('<pre>' . $formula . '</pre>');
             echo('<pre>' . $command . '</pre>');
           }
 
           exec($command, $output, $retval);
 
+          if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
+            if (!file_exists($outputFile) || (0 === filesize($outputFile))) {
+              $exception = new Exception('Can not convert DVI file to PNG');
+              continue;
+            }
+          }
+
           if ($params['debug']) {
-            echo('<pre>');
-            print_r($output);
-            echo('</pre>');
+            exit();
           }
 
-          $output = join('\n', $output);
-
-          if (($retval > 0) || preg_match('/Emergency stop/i', $output) || !file_exists($dviFile) || (0 === filesize($dviFile))) {
-            throw new Exception('Can not compile LaTeX formula');
-          }
-
-        } catch (Exception $e) {
-          if ($params['fallbackToImage']) {
-            return $this->renderSimpleImage($formula, $params);
-          } else {
-            throw $e;
+          return $outputFile;
+        } finally {
+          foreach($tempFiles as $tempFile) {
+            if (file_exists($tempFile)) {
+              // @unlink($tempFile);
+            }
           }
         }
-
-        // $command = $this->pathToDviPngTool . ' -q -T tight -D ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
-        $command = $this->pathToDviPngTool . ' -q ' . $params['density'] . ' -o ' . $outputFile . ' ' . $dviFile;
-
-        $retries = 10;
-
-        $output = '';
-        $retval = '';
-
-        if ($params['debug']) {
-          echo('<pre>' . $command . '</pre>');
-        }
-
-        exec($command, $output, $retval);
-
-        if (($retval > 0) || !file_exists($outputFile) || (0 === filesize($outputFile))) {
-          if (!file_exists($outputFile) || (0 === filesize($outputFile))) {
-            throw new Exception('Can not convert DVI file to PNG');
-          }
-        }
-
-      } finally {
-
-        foreach($tempFiles as $tempFile) {
-          if (file_exists($tempFile)) {
-            // @unlink($tempFile);
-          }
-        }
-
       }
+    }
 
-      if ($params['debug']) {
-        exit();
-      }
-
-      return $outputFile;
-
+    if ($params['fallbackToImage']) {
+      // echo(1);exit();
+      return $this->renderSimpleImage($formula, $params);
+    } else {
+      throw $exception;
     }
 
   }
