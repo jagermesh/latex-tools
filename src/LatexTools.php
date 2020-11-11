@@ -251,6 +251,7 @@ class LatexTools {
     $formula = iconv("ISO-8859-1","UTF-8", $formula);
 
     $formula = str_replace('\\text{img_}', '', $formula);
+    $formula = str_replace('´', "'" , $formula);
 
     $images = $this->processImages($formula);
 
@@ -376,10 +377,14 @@ class LatexTools {
 
         foreach($tempFiles as $tempFile) {
           if (file_exists($tempFile)) {
-            @unlink($tempFile);
+            // @unlink($tempFile);
           }
         }
 
+      }
+
+      if ($params['debug']) {
+        exit();
       }
 
       return $outputFile;
@@ -417,10 +422,14 @@ class LatexTools {
 
     $imageFile = $this->render($formula, $params);
 
-    header('Content-Type: image/png');
-    header('Content-Length: ' . filesize($imageFile));
+    $debug = isset($params['debug']) && $params['debug'];
 
-    readfile($imageFile);
+    if (!$debug) {
+      header('Content-Type: image/png');
+      header('Content-Length: ' . filesize($imageFile));
+
+      readfile($imageFile);
+    }
 
   }
 
