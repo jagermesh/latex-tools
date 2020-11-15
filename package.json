@@ -1,0 +1,18 @@
+{
+  "name": "LatexTools",
+  "description": "Latex Tools",
+  "version": "1.0.0",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-phplint": "^0.9.0",
+    "phplint": "^2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jagermesh/LatexTools.git"
+  },
+  "scripts": {
+    "build": "npm install && gulp build",
+    "update": "npm update && gulp build"
+  }
+}
