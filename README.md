@@ -83,10 +83,8 @@ Example
 <?php
   require_once(__DIR__ . 'LatexTools.php');
   $latexTools = new LatexTools();
-  $latexTools->renderIntoResponse('not a fromula or broken one x^');
+  $latexTools->renderIntoResponse('x^2');
 ```
-
-![](demo/broken.png)
 
 Font name for regular image (`fonts/PlayfairDisplay-Regular.ttf` by default)
 
