@@ -287,9 +287,11 @@ class LatexTools {
     $latexDocument .= '\pagestyle{empty}' . "\n";
 
     $latexDocuments = [];
-    $latexDocuments[] = $latexDocument . "\n" .
-                                         trim($formula) . "\n" .
-                                         '\end{document}'."\n";
+    if (count($images['tempFiles']) < 2) {
+      $latexDocuments[] = $latexDocument . "\n" .
+                                           trim($formula) . "\n" .
+                                           '\end{document}'."\n";
+    }
     $latexDocuments[] = $latexDocument . "\n" .
                                          '\begin{gather*}' . "\n" .
                                          trim($formula) . "\n" .
@@ -401,7 +403,6 @@ class LatexTools {
     }
 
     if ($params['fallbackToImage']) {
-      // echo(1);exit();
       return $this->renderSimpleImage($formula, $params);
     } else {
       throw $exception;
