@@ -314,7 +314,7 @@ class LatexTools {
         $outputFile = $this->getCachePath() . $outputFileName;
       }
 
-      if (!$params['checkOnly'] && file_exists($outputFile) && (filesize($outputFile) > 0)) {
+      if (!$params['debug'] && !$params['checkOnly'] && file_exists($outputFile) && (filesize($outputFile) > 0)) {
         return $outputFile;
       } else {
         $tempFileName = 'latex-' . $formulaHash . '.tex';
